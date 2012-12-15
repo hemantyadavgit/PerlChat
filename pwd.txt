@@ -1,4 +1,2 @@
 admin:password
-hemant:csci4131
-abe:abe
-ad:ad
+hemant:pass
