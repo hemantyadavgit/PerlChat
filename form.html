@@ -1,0 +1,143 @@
+
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>UDP Chat</title>
+</head>
+<script = "text/javascript">
+var request = null, session = null,globalIntervalHandler=true, listen;
+		function postEscape(val) {
+			return encodeURIComponent(val).replace(/%20/g, "+")
+		}
+
+function respond_login() {
+			if( request.readyState != 4 ) return
+			
+			session = request.responseText
+			
+			if( session == "failed" ) 
+			{
+				alert("Incorrect Password");
+					form.loggedIn.checked = false
+					document.form.host.disabled=false
+					document.form.port.disabled=false
+					document.form.username.disabled=false
+					document.form.password.disabled=false
+					document.form.display.value =" "
+				return 
+				
+			}
+			else if( session == "DUP")
+			{
+				alert("Session already exists! You are alreaddy logged in!");
+					form.loggedIn.checked = false
+					document.form.host.disabled=false
+					document.form.port.disabled=false
+					document.form.username.disabled=false
+					document.form.password.disabled=false
+					document.form.display.value =" "
+				return 
+			}
+			else
+			{
+			alert("You are now logged in. Your Session ID is "+session);
+			document.form.loggedIn.checked = true;
+			document.form.session.value = session;
+      loop();				
+			}
+		}
+function loop(){
+
+var listen = setInterval(update_chat, 3000);
+
+
+}
+
+function respond_query() {
+	if( request.readyState != 4 ) return
+	document.form.display.value = request.responseText
+ var textarea = document.getElementById('ta');
+ if(request.responseText=="Your Session has timed out!")
+ {
+	alert("Your session has timed out!");
+	form.loggedIn.checked = false
+ document.form.host.disabled=false
+ document.form.port.disabled=false
+ document.form.username.disabled=false
+ document.form.password.disabled=false
+ document.form.display.value =" "
+ clearInterval(listen);
+	globalIntervalHandler=false
+}
+textarea.scrollTop = textarea.scrollHeight;
+}
+
+function submit_logout() {
+	var request=null
+	if( !document.form.loggedIn.checked ) return
+  
+	logout = new XMLHttpRequest()
+	logout.open("POST", "client.cgi", true /* asynchronous? */ )
+	logout.setRequestHeader("Content-Type", "application/x-www-form-urlencoded")
+	console.log("action=logout&session=" + postEscape(document.form.session.value)+"&host="+postEscape(document.form.host.value)+"&port="+postEscape(document.form.port.value))
+	logout.send("action=logout&session=" + postEscape(document.form.session.value)+"&host="+postEscape(document.form.host.value)+"&port="+postEscape(document.form.port.value)+"&action=logout")
+	form.loggedIn.checked = false
+ document.form.host.disabled=false
+ document.form.port.disabled=false
+ document.form.username.disabled=false
+ document.form.password.disabled=false
+ document.form.display.value =" "
+ clearInterval(listen);
+	globalIntervalHandler=false
+	//do AJAX submission to get rid of session server side
+}
+
+function submit_login() {
+			if( document.form.loggedIn.checked ) return
+			request = new XMLHttpRequest()
+			request.onreadystatechange = respond_login
+			request.open("POST", "client.cgi", true /* asynchronous? */ )
+			request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded")
+			request.send( "action=login&password=" + postEscape( document.form.password.value ) + "&username=" + postEscape( document.form.username.value ) + "&host=" + postEscape( document.form.host.value ) + "&port=" + postEscape( document.form.port.value ))
+			document.form.password.value = ""
+			document.form.host.disabled=true
+      document.form.port.disabled=true
+      document.form.username.disabled=true
+      document.form.password.disabled=true      
+}
+
+function submit_query() {
+	request = new XMLHttpRequest()
+			request.onreadystatechange = respond_query
+			request.open("POST", "client.cgi", true /* asynchronous? */ )
+			request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded")
+			request.send( "action=sendmsg&session=" + postEscape( document.form.session.value ) + "&send=" + postEscape( document.form.message.value ) + "&host=" + postEscape( document.form.host.value ) + "&port=" + postEscape( document.form.port.value ))
+      document.form.message.value = ""
+}
+function update_chat(){
+request = new XMLHttpRequest()
+			request.onreadystatechange = respond_query
+			request.open("POST", "client.cgi", true /* asynchronous? */ )
+			request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded")
+			request.send( "action=update&session=" + postEscape( document.form.session.value ) +"&host=" + postEscape( document.form.host.value ) + "&port=" + postEscape( document.form.port.value ))
+}
+
+
+</script>
+
+
+
+<body>
+  <form name = "form">
+    <input name="username" size="25" type="text">username<br>
+    <input name="password" size="25" type="password">password<br>
+    <input name="host" size="25" type="text">host<br>
+    <input name="port" size="25" type="text">port<br>
+    <input name="login" value="Login" type="button" onclick="submit_login()"><input type="checkbox" name="loggedIn" id = "loggedIn" onclick="this.checked=!this.checked">
+<input name="action" value="logout" type="button" onClick="submit_logout()"><br>
+    <textarea name="display" rows="24" cols="68" id="ta" readonly="readonly">    </textarea><br>
+	<input type="hidden" name="session" value="">
+    <input name="message" size="64" maxlength="64" type="text"><input name="send" value="send" type="button" onClick = "submit_query()"><p></p>
+  </form>
+
+
+</body></html>
